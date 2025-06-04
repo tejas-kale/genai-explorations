@@ -1,0 +1,4 @@
+secrets.env
+.DS_Store
+uv.lock
+data/
