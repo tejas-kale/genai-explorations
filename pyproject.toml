@@ -8,6 +8,7 @@ dependencies = [
     "beautifulsoup4>=4.13.4",
     "chromadb>=1.0.12",
     "ebooklib>=0.19",
+    "elasticsearch>=9.0.2",
     "google-genai>=1.18.0",
     "jupyter>=1.1.1",
     "langchain>=0.3.25",
@@ -18,4 +19,5 @@ dependencies = [
     "openai>=1.84.0",
     "pydub>=0.25.1",
     "python-dotenv>=1.1.0",
+    "tiktoken>=0.9.0",
 ]
