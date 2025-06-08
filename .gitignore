@@ -4,3 +4,5 @@ uv.lock
 
 data/
 .github/
+
+**/chroma_db
