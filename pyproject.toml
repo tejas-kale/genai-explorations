@@ -9,6 +9,7 @@ dependencies = [
     "chromadb>=1.0.12",
     "ebooklib>=0.19",
     "elasticsearch>=9.0.2",
+    "fastembed>=0.7.1",
     "google-genai>=1.18.0",
     "jupyter>=1.1.1",
     "langchain>=0.3.25",
@@ -23,5 +24,7 @@ dependencies = [
     "pandas>=2.3.0",
     "pydub>=0.25.1",
     "python-dotenv>=1.1.0",
+    "qdrant-client>=1.14.3",
     "tiktoken>=0.9.0",
+    "tqdm>=4.67.1",
 ]
