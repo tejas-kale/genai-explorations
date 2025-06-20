@@ -1,6 +1,6 @@
 # Generative AI Explorations
 
-This repository contains notebooks for my explorations with Generative AI frameworks. 
+This repository contains notebooks from my explorations with Generative AI frameworks. 
 
 ## Notebooks
 ### RAG
