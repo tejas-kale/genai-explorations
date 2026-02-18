@@ -15,7 +15,7 @@ This repository contains notebooks from my explorations with Generative AI frame
 - [Langgraph State Customisation](./notebooks/agents/chatbot_with_customised_state.ipynb)
 - [Langgraph Time Travel](./notebooks/agents/chatbot_with_time_travel.ipynb)
 
-### Text to Speech
+### Text to speech
 - [Create audio from text using Gemini 2.5 Flash TTS](./notebooks/tts;exploring_gemini_25_tts.ipynb)
 - [Create an audiobook using Gemini 2.5 Flash TTS](./notebooks/tts/creating_audiobooks_with_gemini_25_tts.ipynb)
 
