@@ -18,3 +18,6 @@ This repository contains notebooks from my explorations with Generative AI frame
 ### Text to Speech
 - [Create audio from text using Gemini 2.5 Flash TTS](./notebooks/tts;exploring_gemini_25_tts.ipynb)
 - [Create an audiobook using Gemini 2.5 Flash TTS](./notebooks/tts/creating_audiobooks_with_gemini_25_tts.ipynb)
+
+### Podcast Translation
+- [Convert a German podcast episode to an English podcast episode](./notebooks/podcast/german_podcast_to_english.ipynb)
