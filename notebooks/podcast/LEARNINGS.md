@@ -152,6 +152,86 @@ torch.cuda.empty_cache()
 
 ---
 
+## 10. vLLM + Gemma 3 4B-IT: SigLIP vision tower profiling crash
+
+`google/gemma-3-4b-it` is a **multimodal model** — it includes a SigLIP vision encoder. vLLM's V1 engine (`EngineCoreProc`) profiles the model before allocating KV-cache blocks by running a dummy forward pass through `embed_multimodal`, which calls into the SigLIP encoder. This crashes on text-only workloads (OOM or dtype error inside a SigLIP encoder layer).
+
+The error surfaces as:
+```
+RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}
+```
+with the real traceback in stderr: `gemma3_mm.py → embed_multimodal → siglip.py encoder layer`.
+
+**Fix**: pass `limit_mm_per_prompt={"image": 0}` to the `LLM` constructor. This signals to vLLM that no image tokens will ever be submitted, causing it to skip the vision tower profiling pass entirely:
+
+```python
+llm = LLM(
+    model="google/gemma-3-4b-it",
+    dtype="bfloat16",
+    limit_mm_per_prompt={"image": 0},
+)
+```
+
+---
+
+## 11. torchaudio ≥ 2.6 uses torchcodec as the default backend for `torchaudio.load()`
+
+Starting from torchaudio 2.6, `torchaudio.load()` routes through `load_with_torchcodec` by default, which hard-requires `torchcodec`. Since torchcodec has no compatible wheel for PyTorch 2.8.0 stable (see §2), any call to `torchaudio.load()` raises:
+
+```
+ImportError: TorchCodec is required for load_with_torchcodec.
+```
+
+This affects **f5-tts**: `F5TTS.infer()` calls `torchaudio.load(ref_audio)` internally in `infer_process`.
+
+**Fix**: monkey-patch `torchaudio.load` with a soundfile-based replacement before instantiating `F5TTS`:
+
+```python
+import torchaudio, soundfile as sf
+
+def _load(uri, frame_offset=0, num_frames=-1, normalize=True,
+          channels_first=True, format=None, buffer_size=4096, backend=None):
+    data, sr = sf.read(uri, dtype="float32", always_2d=True)
+    t = torch.from_numpy(data.T)
+    if frame_offset: t = t[:, frame_offset:]
+    if num_frames > 0: t = t[:, :num_frames]
+    if not channels_first: t = t.T
+    return t, sr
+
+torchaudio.load = _load
+```
+
+---
+
+## 12. f5tts.transcribe fails in this environment — use existing ASR transcript instead
+
+`F5TTS.transcribe(ref_audio)` loads the WAV file as raw bytes and pipes them through `ffmpeg` (via the transformers `ffmpeg_read` helper). In this environment ffmpeg returns 0 audio samples, raising:
+
+```
+ValueError: Soundfile is either not in the correct format or is malformed.
+```
+
+Since the full German ASR transcript is already available from the earlier Whisper pass, pass the text of the reference segment directly as `ref_text` to `F5TTS.infer()` — no transcription call required.
+
+Additionally, choose the **longest** segment per speaker as the voice reference (not the first-by-start-time). The first segment can be a near-zero-duration diarization artifact which exports as an empty WAV.
+
+---
+
+## 13. Suppressing f5-tts per-segment stdout/stderr output
+
+`F5TTS.infer()` prints verbose output to stdout and stderr for every segment (`Converting audio...`, `ref_text ...`, `gen_text ...`, per-batch tqdm bars). Wrap the call with `contextlib.redirect_stdout/stderr` to silence it:
+
+```python
+import contextlib, os
+with open(os.devnull, "w") as devnull:
+    with contextlib.redirect_stdout(devnull), contextlib.redirect_stderr(devnull):
+        f5tts.infer(...)
+```
+
+An outer `tqdm` loop over all segments provides the only progress indicator needed.
+
+---
+
 ## Summary
 
 The combination of pyannote.audio 4.x + transformers on PyTorch 2.8.0 stable creates a torchcodec dead-end with no installable wheel. The correct workaround is to pre-load audio with librosa and feed raw arrays/tensors to both pipelines, bypassing the torchcodec code path in both libraries completely.
@@ -159,3 +239,7 @@ The combination of pyannote.audio 4.x + transformers on PyTorch 2.8.0 stable cre
 For instruction-tuned translation models (e.g. TranslateGemma, Gemma 3), always apply the tokenizer's chat template — raw prompts silently skip required control tokens, causing NaN probabilities and CUDA assertion crashes.
 
 For fast batch translation, use vLLM instead of the HuggingFace `generate()` loop. vLLM's continuous batching and PagedAttention process all segments in a single pass, reducing translation of a 2-hour podcast from ~10 minutes to under 1 minute on an RTX PRO 6000.
+
+When using vLLM with multimodal models (e.g. Gemma 3) for text-only inference, set `limit_mm_per_prompt={"image": 0}` to prevent the vision tower profiling pass from crashing during engine initialisation.
+
+torchaudio ≥ 2.6 routes `torchaudio.load()` through torchcodec by default. Patch it with a soundfile-based replacement before loading any library (e.g. f5-tts) that calls `torchaudio.load` internally.
