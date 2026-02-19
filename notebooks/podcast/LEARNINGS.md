@@ -102,14 +102,25 @@ When `torch.multinomial` samples from a probability distribution containing NaN 
 AcceleratorError: CUDA error: device-side assert triggered
 ```
 
-**Fix**: use `tokenizer.apply_chat_template()` and set `do_sample=False` (greedy decoding is sufficient and deterministic for translation, and avoids `multinomial` entirely):
+**Fix**: use `tokenizer.apply_chat_template()` with `do_sample=False` (greedy, deterministic, avoids `multinomial` entirely). However, `translategemma-12b-it` has a **custom Jinja template** that additionally requires `content` to be a list of one structured dict — not a plain string:
 
 ```python
-messages = [{"role": "user", "content": f"Translate the following German text to English.\nGerman: {text}\nEnglish:"}]
+messages = [{"role": "user", "content": [{
+    "type": "text",
+    "source_lang_code": "de",
+    "target_lang_code": "en",
+    "text": text,
+}]}]
 inputs = tokenizer.apply_chat_template(
     messages, return_tensors="pt", return_dict=True, add_generation_prompt=True
 ).to("cuda")
 outputs = translate_model.generate(**inputs, max_new_tokens=512, do_sample=False)
+```
+
+Passing a plain string as `content` raises:
+```
+TemplateError: User role must provide `content` as an iterable with exactly one item.
+That item must be a `mapping(type:'text'|'image', source_lang_code:string, target_lang_code:string, ...)`.
 ```
 
 Note: with `device_map="auto"` the model is sharded across devices — use `.to("cuda")` (first CUDA device) rather than `.to(translate_model.device)` for the inputs.
