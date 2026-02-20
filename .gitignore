@@ -249,6 +249,7 @@ claude-code/
 
 # Specific notebook data
 notebooks/llm_zoomcamp/data/
+notebooks/tts/mlx-audio-test
 
 # === Logs and Temporary Files ===
 *.log
