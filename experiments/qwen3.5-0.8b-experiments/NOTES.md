@@ -147,6 +147,11 @@ Findings:
   - Single runs cannot distinguish a 20% success rate from a 0% rate
 - **Key lesson**: Five variables changed at once → confounded. Any "why it worked" list that includes all five is a post-hoc rationalisation, not an explanation. Ablation separates correlation from causation.
 
+## Experiment 8: Few-shot examples solve classification
+- **Approach**: Added positive and negative examples directly in the system prompt
+- **Result**: 12/12 queries classified correctly on first attempt
+- **Key finding**: Simply providing examples is enough — no need for complex prompt engineering, flowcharts, or checklists. The 0.8B model learns the pattern from examples alone.
+
 ---
 
 ## Notebook style rules
