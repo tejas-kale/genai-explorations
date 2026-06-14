@@ -257,3 +257,5 @@ notebooks/tts/mlx-audio-test
 *.temp
 logs/
 tmp/
+# Local experiment notes
+experiments/qwen3.5-0.8b-experiments/NOTES.md
