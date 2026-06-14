@@ -9,14 +9,16 @@ MODEL_ID = "mlx-community/Qwen3.5-0.8B-OptiQ-4bit"
 SYSTEM_PROMPT = """\
 You are a general-purpose assistant. Answer questions directly.
 
-You may request weather data ONLY when BOTH are true:
+Highest priority:
+If the latest user message starts with "Weather data for", do NOT output WEATHERCHECK.
+Answer using that weather data.
+
+For normal user questions, request weather data ONLY when BOTH are true:
   (a) The user mentions a real city by name, AND
-  (b) The user asks about weather/rain/sun/temperature/forecast.
+  (b) The user asks about weather/rain/sun/temperature/forecast/umbrella/hot/max temp.
 
 When both are true, output exactly: WEATHERCHECK <city>
-Otherwise, just answer the question.
-
-When you receive weather data, do NOT output WEATHERCHECK again. Just answer using it."""
+Otherwise, just answer the question."""
 
 model, tokenizer = mlx_lm.load(MODEL_ID)
 
