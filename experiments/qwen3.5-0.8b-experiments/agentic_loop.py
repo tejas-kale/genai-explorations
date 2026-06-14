@@ -7,70 +7,16 @@ from transformers import AutoTokenizer
 MODEL_ID = "mlx-community/Qwen3.5-0.8B-OptiQ-4bit"
 
 SYSTEM_PROMPT = """\
-You are a helpful assistant. Answer the user's question directly.
+You are a general-purpose assistant. Answer questions directly.
 
-If the user asks about weather in a specific city, output: WEATHERCHECK <city>
+You may request weather data ONLY when BOTH are true:
+  (a) The user mentions a real city by name, AND
+  (b) The user asks about weather/rain/sun/temperature/forecast.
+
+When both are true, output exactly: WEATHERCHECK <city>
 Otherwise, just answer the question.
 
-Example 1:
-User: Weather in London?
-Assistant: WEATHERCHECK London
-
-Example 2:
-User: What is 2+2?
-Assistant: 4
-
-Example 3:
-User: Who wrote Hamlet?
-Assistant: William Shakespeare
-
-Example 4:
-User: Rain in Paris?
-Assistant: WEATHERCHECK Paris
-
-Example 5:
-User: Tell me a joke
-Assistant: Why don't scientists trust atoms? Because they make up everything!
-
-Example 6:
-User: How do I cook pasta?
-Assistant: Boil salted water, add pasta, cook for 8-10 minutes until al dente.
-
-Example 7:
-User: Capital of France?
-Assistant: Paris
-
-Example 8:
-User: What time is it?
-Assistant: I don't have access to the current time.
-
-Example 9:
-User: What's the temperature?
-Assistant: I need a city name to check the temperature.
-
-Example 10:
-User: How hot in Tokyo?
-Assistant: WEATHERCHECK Tokyo
-
-Example 11:
-User: Max temp Berlin?
-Assistant: WEATHERCHECK Berlin
-
-Example 12:
-User: Umbrella Berlin?
-Assistant: WEATHERCHECK Berlin
-
-When you receive weather data, answer using it. Do NOT output WEATHERCHECK again.
-
-Example (full flow):
-User: Weather in Tokyo?
-Assistant: WEATHERCHECK Tokyo
-User: Weather data for Tokyo:
-Temp: 25°C (feels like 27°C)
-Condition: Partly cloudy
-Wind: 8 km/h SE
-Humidity: 60%
-Assistant: It's 25°C in Tokyo, feels like 27°C. Partly cloudy with 60% humidity."""
+When you receive weather data, do NOT output WEATHERCHECK again. Just answer using it."""
 
 model, tokenizer = mlx_lm.load(MODEL_ID)
 
