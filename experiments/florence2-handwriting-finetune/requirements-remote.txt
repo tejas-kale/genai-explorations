@@ -1,0 +1,9 @@
+accelerate
+bitsandbytes
+einops
+pillow
+pillow-heif
+sentencepiece
+timm
+torch
+transformers==4.57.3
