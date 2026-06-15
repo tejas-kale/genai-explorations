@@ -190,14 +190,14 @@ def test_label_ui_saves_label(tmp_path):
     assert (labels / "one.txt").read_text() == "ground truth\n"
 
 
-def test_evaluate_scores_partial_labels_and_writes_breakdown(tmp_path, capsys):
+def test_evaluate_prints_label_count_and_model_means(tmp_path, capsys):
     evaluate = load_script("evaluate_handwriting")
     experiments = tmp_path / "experiments"
     labels = tmp_path / "labels"
     (experiments / "model-a").mkdir(parents=True)
     (experiments / "model-b").mkdir(parents=True)
     labels.mkdir()
-    (experiments / "model-a" / "one.txt").write_text("hello world\n")
+    (experiments / "model-a" / "one.txt").write_text("Hello, world!\n")
     (experiments / "model-b" / "one.txt").write_text("hello word\n")
     (experiments / "model-a" / "two.txt").write_text("ignored\n")
     (labels / "one.txt").write_text("hello world\n")
@@ -205,11 +205,10 @@ def test_evaluate_scores_partial_labels_and_writes_breakdown(tmp_path, capsys):
     evaluate.main([
         "--experiments", str(experiments),
         "--labels", str(labels),
-        "--output", str(tmp_path / "scores"),
     ])
 
-    rows = json.loads((tmp_path / "scores" / "breakdown.json").read_text())
-    assert {row["image_stem"] for row in rows} == {"one"}
-    assert rows[0]["model"] == "model-a"
-    assert rows[0]["cer"] == 0
-    assert "model-a" in capsys.readouterr().out
+    out = capsys.readouterr().out
+    assert "labels: 1" in out
+    assert "model-a" in out
+    assert "mean_normalised_wer" in out
+    assert "0.0000" in out
