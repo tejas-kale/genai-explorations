@@ -209,6 +209,8 @@ def test_evaluate_prints_label_count_and_model_means(tmp_path, capsys):
 
     out = capsys.readouterr().out
     assert "labels: 1" in out
+    assert "words: 2" in out
+    assert "characters: 11" in out
     assert "model-a" in out
     assert "mean_normalised_wer" in out
     assert "0.0000" in out

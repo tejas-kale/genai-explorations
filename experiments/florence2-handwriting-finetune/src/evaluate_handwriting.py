@@ -52,6 +52,15 @@ def mean(rows, key):
     return sum(row[key] for row in rows) / len(rows)
 
 
+def label_stats(label_paths):
+    values = [text(path) for path in label_paths.values()]
+    return {
+        "labels": len(values),
+        "words": sum(len(value.split()) for value in values),
+        "characters": sum(len(value) for value in values),
+    }
+
+
 def summary(experiments, label_paths):
     out = []
     for model, rows in model_rows(experiments, label_paths):
@@ -65,8 +74,10 @@ def summary(experiments, label_paths):
     return sorted(out, key=lambda row: (row["mean_cer"], row["mean_wer"], row["model"]))
 
 
-def print_summary(label_count, rows):
-    print(f"labels: {label_count}")
+def print_summary(stats, rows):
+    print(f"labels: {stats['labels']}")
+    print(f"words: {stats['words']}")
+    print(f"characters: {stats['characters']}")
     print()
     print(f"{'model':24} {'images':>6} {'mean_cer':>9} {'mean_wer':>9} {'mean_normalised_wer':>20}")
     for row in rows:
@@ -79,7 +90,7 @@ def main(argv=None):
     parser.add_argument("--labels", default="labels")
     args = parser.parse_args(argv)
     label_paths = labels(args.labels)
-    print_summary(len(label_paths), summary(args.experiments, label_paths))
+    print_summary(label_stats(label_paths), summary(args.experiments, label_paths))
 
 
 if __name__ == "__main__":
