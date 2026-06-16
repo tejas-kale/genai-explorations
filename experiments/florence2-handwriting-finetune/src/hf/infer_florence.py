@@ -2,7 +2,7 @@ import os
 
 import torch
 from datasets import load_dataset
-from transformers import AutoModelForCausalLM, AutoProcessor
+from transformers import AutoModelForCausalLM, AutoProcessor, GenerationConfig
 from transformers.generation import GenerationMixin
 
 
@@ -16,6 +16,7 @@ sample = load_dataset(dataset_id, token=token)["infer"][0]
 processor = AutoProcessor.from_pretrained(model_id, trust_remote_code=True, token=token)
 model = AutoModelForCausalLM.from_pretrained(model_id, trust_remote_code=True, token=token, attn_implementation="eager").to(device)
 model.language_model.__class__ = type("Florence2LanguageModel", (model.language_model.__class__, GenerationMixin), {})
+model.language_model.generation_config = GenerationConfig.from_model_config(model.language_model.config)
 
 inputs = processor(text=task, images=sample["image"].convert("RGB"), return_tensors="pt").to(device)
 ids = model.generate(**inputs, max_new_tokens=256)
