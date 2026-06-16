@@ -40,19 +40,26 @@ val_loader = DataLoader(val_items, batch_size=1, collate_fn=collate)
 optim = torch.optim.AdamW(model.parameters(), lr=lr)
 sched = get_scheduler("linear", optim, 0, epochs * len(train_loader))
 
-model.train()
-for _ in range(epochs):
+for epoch in range(epochs):
+    model.train()
+    train_losses = []
     for batch in train_loader:
         loss = model(**batch).loss
         loss.backward()
         optim.step(); sched.step(); optim.zero_grad()
+        train_losses.append(loss.detach().float().cpu())
+    model.eval()
+    val_losses = []
+    with torch.no_grad():
+        for batch in val_loader:
+            val_losses.append(model(**batch).loss.detach().float().cpu())
+    print({"epoch": epoch + 1, "train_loss": float(sum(train_losses) / len(train_losses)), "val_loss": float(sum(val_losses) / len(val_losses))})
 
-model.eval()
-losses = []
-with torch.no_grad():
-    for batch in val_loader:
-        losses.append(model(**batch).loss.detach().float().cpu())
+sample = val_items[0] if val_items else train_items[0]
+inputs = processor(text=task, images=sample["image"].convert("RGB"), return_tensors="pt").to(device)
+ids = model.generate(**inputs, max_new_tokens=128)
+predicted = processor.batch_decode(ids, skip_special_tokens=True)[0]
+print({"expected": sample["text"], "predicted": predicted})
 
 model.push_to_hub(out_repo, private=True, token=token)
 processor.push_to_hub(out_repo, private=True, token=token)
-sum(losses) / len(losses) if losses else loss.detach().float().cpu()
