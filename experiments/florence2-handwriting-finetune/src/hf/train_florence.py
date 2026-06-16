@@ -60,7 +60,7 @@ for epoch in range(epochs):
 
 sample = val_items[0] if val_items else train_items[0]
 inputs = processor(text=task, images=sample["image"].convert("RGB"), return_tensors="pt").to(device)
-ids = model.generate(**inputs, max_new_tokens=128)
+ids = model.generate(**inputs, max_new_tokens=128, num_beams=1, do_sample=False, use_cache=False)
 predicted = processor.batch_decode(ids, skip_special_tokens=True)[0]
 print({"expected": sample["text"], "predicted": predicted})
 

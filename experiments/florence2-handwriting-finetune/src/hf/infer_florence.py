@@ -19,6 +19,6 @@ model.language_model.__class__ = type("Florence2LanguageModel", (model.language_
 model.language_model.generation_config = GenerationConfig.from_model_config(model.language_model.config)
 
 inputs = processor(text=task, images=sample["image"].convert("RGB"), return_tensors="pt").to(device)
-ids = model.generate(**inputs, max_new_tokens=256)
+ids = model.generate(**inputs, max_new_tokens=256, num_beams=1, do_sample=False, use_cache=False)
 predicted = processor.batch_decode(ids, skip_special_tokens=True)[0]
 print({"image_id": sample["image_id"], "predicted": predicted})
