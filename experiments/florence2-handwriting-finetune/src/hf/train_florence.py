@@ -4,6 +4,7 @@ import torch
 from datasets import load_dataset
 from torch.utils.data import DataLoader
 from transformers import AutoModelForCausalLM, AutoProcessor, get_scheduler
+from transformers.generation import GenerationMixin
 
 
 token = os.environ["HF_TOKEN"]
@@ -22,6 +23,7 @@ train_items, val_items = items[:split], items[split:]
 
 processor = AutoProcessor.from_pretrained(model_id, trust_remote_code=True, revision=revision)
 model = AutoModelForCausalLM.from_pretrained(model_id, trust_remote_code=True, revision=revision, attn_implementation="eager").to(device)
+model.language_model.__class__ = type("Florence2LanguageModel", (model.language_model.__class__, GenerationMixin), {})
 for p in model.vision_tower.parameters():
     p.requires_grad = False
 
