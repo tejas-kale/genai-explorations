@@ -53,6 +53,7 @@ dependencies = [
     "langgraph-checkpoint-sqlite>=2.0.11",
     "mlx-lm>=0.22.0",
     "mlx-audio",
+    "datasets>=5.0.0",
 ]
 
 [project.scripts]

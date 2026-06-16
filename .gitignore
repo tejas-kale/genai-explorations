@@ -161,6 +161,12 @@ wandb/
 # Data directories
 data/
 datasets/
+experiments/florence2-handwriting-finetune/.ui/
+experiments/florence2-handwriting-finetune/labels/
+experiments/florence2-handwriting-finetune/upload_sanitised/
+experiments/florence2-handwriting-finetune/Fine_tune_Florence_2.ipynb
+experiments/florence2-handwriting-finetune/experiments/*
+!experiments/florence2-handwriting-finetune/experiments/.gitkeep
 
 # Vector databases
 **/chroma_db/
