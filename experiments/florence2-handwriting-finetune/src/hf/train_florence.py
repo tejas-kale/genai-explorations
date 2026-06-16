@@ -21,7 +21,7 @@ split = max(1, int(len(items) * 0.8))
 train_items, val_items = items[:split], items[split:]
 
 processor = AutoProcessor.from_pretrained(model_id, trust_remote_code=True, revision=revision)
-model = AutoModelForCausalLM.from_pretrained(model_id, trust_remote_code=True, revision=revision).to(device)
+model = AutoModelForCausalLM.from_pretrained(model_id, trust_remote_code=True, revision=revision, attn_implementation="eager").to(device)
 for p in model.vision_tower.parameters():
     p.requires_grad = False
 
