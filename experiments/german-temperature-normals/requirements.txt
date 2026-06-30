@@ -1,0 +1,24 @@
+# Core analysis
+requests>=2.31
+pandas>=2.1
+numpy>=1.26
+pyarrow>=14.0
+scipy>=1.11
+statsmodels>=0.14
+scikit-misc>=0.3          # skmisc.loess: loess with .predict() (unlike statsmodels LOWESS)
+
+# Plotting + spatial
+matplotlib>=3.8
+geopandas>=0.14
+shapely>=2.0
+
+# Article rendering (Quarto uses the Jupyter Python engine)
+jupyter>=1.0
+ipykernel>=6.0
+nbformat>=5.9
+nbclient>=0.9
+jupyter-cache>=1.0
+
+# Testing
+pytest>=7.4
+tqdm>=4.66
