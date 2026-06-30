@@ -1,0 +1,9 @@
+# python
+__pycache__/
+*.pyc
+.pytest_cache/
+.ipynb_checkpoints/
+.jupyter_cache/
+# rendered artifacts kept out of git except the final html we add explicitly
+article_files/
+*.quarto_ipynb
