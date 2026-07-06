@@ -23,7 +23,7 @@ Scans of handwritten notes are transcribed on a short-lived GCP GPU VM so the te
 
 ## Models
 
-`models.json` lists the candidate models; `run_gcp_pipeline.sh` runs every entry except the first (Florence needs an older Transformers, so it runs separately first). `Qwen/Qwen3.5-9B` (4-bit) was the quality winner and is the model the workflow depends on.
+`models.json` now lists only `Qwen/Qwen3.5-9B` (4-bit) — the quality winner from the June 2026 benchmark of Florence-2, Qwen 0.8B–9B, Gemma E2B/E4B, and Apple Vision. `run_gcp_pipeline.sh` runs every entry in order, so add entries to benchmark more models in one VM session.
 
 ## Local sanitisation only
 

@@ -171,13 +171,11 @@ gcloud compute scp --recurse "${SSH_ARGS[@]}" "$UPLOAD" "$VM:~/input"
 gcloud compute scp "${SSH_ARGS[@]}" "$ROOT/src/gcp/remote_transcribe.py" "$ROOT/requirements-remote.txt" "$ROOT/models.json" "$VM:~/"
 
 # --- run: set up the venv on the VM, then transcribe with every model ------
-# models.json[0] (Florence-2-base) is run first against the requirements-
-# remote.txt-pinned transformers version. `transformers` is then upgraded
-# in place before looping over the remaining models.json entries (chat-style
-# Qwen/Gemma vision models), because those newer models need a newer
-# transformers than the version Florence-2-base was validated against.
-# Running Florence first, then upgrading, avoids needing two separate
-# venvs/requirements files for one run.
+# requirements-remote.txt pins the transformers version that Florence-2-base
+# (since removed from models.json) was validated against; the chat-style
+# vision models (Qwen/Gemma) need a newer transformers, so it is upgraded in
+# place after the requirements install. Every models.json entry is run in
+# order — add entries to benchmark more models in one VM session.
 gcloud compute ssh "$VM" "${SSH_ARGS[@]}" --command='set -euo pipefail
 sudo apt-get update
 sudo apt-get install -y python3.10-venv python3-pip
@@ -186,11 +184,10 @@ python3 -m venv ~/venv
 pip install -U pip
 pip install -r ~/requirements-remote.txt
 mkdir -p ~/experiments
-python remote_transcribe.py --input input --output experiments --model microsoft/Florence-2-base --max-new-tokens 512 --attempts 3
 pip install -U transformers
 python - <<"PY"
 import json, subprocess
-for m in json.load(open("models.json"))[1:]:
+for m in json.load(open("models.json")):
     cmd=["python", "remote_transcribe.py", "--input", "input", "--output", "experiments", "--model", m["model_id"], "--max-new-tokens", str(m["max_new_tokens"]), "--attempts", "3"]
     if m["load_in_4bit"]:
         cmd.append("--load-in-4bit")
