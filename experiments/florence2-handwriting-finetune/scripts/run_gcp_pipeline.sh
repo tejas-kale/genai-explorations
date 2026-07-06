@@ -67,9 +67,9 @@ ACCELERATOR=${ACCELERATOR:-type=nvidia-l4,count=1}
 IMAGE_FAMILY=${IMAGE_FAMILY:-pytorch-2-9-cu129-ubuntu-2204-nvidia-580}
 IMAGE_PROJECT=${IMAGE_PROJECT:-deeplearning-platform-release}
 ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
-DATA_DIR=${DATA_DIR:-$ROOT/data}
-UPLOAD=${UPLOAD:-$ROOT/upload_sanitised}
-OUTPUT=${OUTPUT:-$ROOT/experiments}
+DATA_DIR=${DATA_DIR:-$ROOT/data/scans}
+UPLOAD=${UPLOAD:-$ROOT/data/upload_sanitised}
+OUTPUT=${OUTPUT:-$ROOT/data/outputs}
 BOOT_DISK_GB=${BOOT_DISK_GB:-200}
 KMS_KEYRING=${KMS_KEYRING:-${RUN_ID}-ring}
 KMS_KEY=${KMS_KEY:-${RUN_ID}-boot}

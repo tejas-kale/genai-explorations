@@ -6,6 +6,8 @@ Fine-tune `microsoft/Florence-2-base-ft` for basic OCR on a tiny labelled handwr
 
 ## Data layout
 
+Reorganised 2026-07-06: all non-code content now lives under `data/` — `data/scans/` (original HEIC photos, formerly `data/`), `data/labels/`, `data/upload_sanitised/`, `data/outputs/` (per-model transcriptions, formerly `experiments/`), and this file. Paths below reflect the layout at the time the notes were written.
+
 Original local data:
 
 ```text

@@ -161,12 +161,15 @@ wandb/
 # Data directories
 data/
 datasets/
-experiments/florence2-handwriting-finetune/.ui/
-experiments/florence2-handwriting-finetune/labels/
-experiments/florence2-handwriting-finetune/upload_sanitised/
-experiments/florence2-handwriting-finetune/Fine_tune_Florence_2.ipynb
-experiments/florence2-handwriting-finetune/experiments/*
-!experiments/florence2-handwriting-finetune/experiments/.gitkeep
+# florence2-handwriting-finetune: private data lives under data/, but NOTES.md and
+# the outputs/.gitkeep placeholder stay tracked. The global data/ rule above ignores
+# the directory itself, so re-include it before selectively ignoring its contents.
+!experiments/florence2-handwriting-finetune/data/
+experiments/florence2-handwriting-finetune/data/*
+!experiments/florence2-handwriting-finetune/data/NOTES.md
+!experiments/florence2-handwriting-finetune/data/outputs
+experiments/florence2-handwriting-finetune/data/outputs/*
+!experiments/florence2-handwriting-finetune/data/outputs/.gitkeep
 
 # Vector databases
 **/chroma_db/
