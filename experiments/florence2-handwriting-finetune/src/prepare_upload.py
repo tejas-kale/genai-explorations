@@ -1,3 +1,28 @@
+"""Sanitise a folder of handwriting scans before they leave this machine.
+
+This is the first stage of the GCP transcription pipeline
+(scripts/run_gcp_pipeline.sh calls this before creating any cloud
+resources). It re-encodes every source image as a plain JPEG so that only
+pixel data - never the original file - is uploaded to the remote VM:
+
+  - Any EXIF metadata (GPS coordinates, device make/model, timestamps,
+    thumbnails, etc.) embedded by a phone or scanner is dropped, because
+    Image.save() to JPEG with a fresh PIL Image does not carry the source
+    file's EXIF block along. That means no location/device metadata leaves
+    the machine, even though the pipeline's network/IAM controls already
+    keep the destination locked down.
+  - HEIC/HEIF (the default format on iPhones) is converted to JPEG, so the
+    remote VM only ever needs a JPEG decoder - one less codec dependency
+    (pillow-heif) required in requirements-remote.txt on the VM side.
+  - Images are downscaled to max_side on their longest edge, which keeps
+    upload size and remote VRAM/processing time down without materially
+    hurting OCR quality at typical handwriting-photo resolutions.
+
+Output: sanitised JPEGs plus a manifest.json mapping each output file back
+to its original source filename/stem, so downstream transcripts can be
+matched back to the original scan.
+"""
+
 import argparse
 import json
 from pathlib import Path
@@ -8,10 +33,27 @@ EXTS = {".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tif", ".tiff", ".heic", ".he
 
 
 def images(root):
+    """Return all supported image files directly under root, sorted by name."""
     return sorted(p for p in Path(root).expanduser().iterdir() if p.suffix.lower() in EXTS)
 
 
 def sanitise_image(src, dst, max_side=1600):
+    """Decode src, strip its metadata, downscale it, and re-save as JPEG.
+
+    - pillow_heif is registered (if installed) so HEIC/HEIF sources from
+      iPhones can be opened at all; it's optional so this still works on
+      environments that only ever see JPEG/PNG input.
+    - ImageOps.exif_transpose() applies the EXIF orientation flag as an
+      actual pixel rotation/flip before the EXIF data is discarded -
+      otherwise a sanitised image with its orientation tag stripped could
+      come out sideways.
+    - convert("RGB") drops alpha/palette/CMYK modes so every output is a
+      plain JPEG-compatible image.
+    - Saving a fresh Image object as JPEG (quality=92) does not copy the
+      source file's EXIF/metadata block, which is what actually strips the
+      metadata - there is no explicit "remove EXIF" call because none is
+      needed.
+    """
     try:
         from pillow_heif import register_heif_opener
         register_heif_opener()

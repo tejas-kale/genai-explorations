@@ -1,8 +1,2 @@
-jiwer
 pillow
 pillow-heif
-pyobjc-framework-Quartz
-pyobjc-framework-Vision
-pytest
-scipy
-torch

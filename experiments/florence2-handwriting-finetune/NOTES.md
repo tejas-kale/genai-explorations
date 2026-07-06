@@ -325,3 +325,69 @@ Keep this deliberately naive:
 - one small script that can be read top to bottom.
 
 Add complexity only after confirming the naive version produces useful OCR.
+
+## TrOCR experiments (July 2026)
+
+A parallel track fine-tuned `microsoft/trocr-base-handwritten` on the same data, reusing the Florence HF Jobs setup. TrOCR is a stock `VisionEncoderDecoderModel` — none of Florence's remote-code workarounds apply.
+
+Scripts:
+
+```text
+src/hf/train_trocr.py           # full-page training, 70/30 page split, both-split CER/WER eval
+src/hf/train_trocr_lines.py     # line-level variant
+src/prepare_line_dataset.py     # builds line-crop dataset from pages + labels
+scripts/run_trocr_training.sh
+scripts/run_trocr_lines_training.sh
+scripts/trocr_eval.py           # local zero-shot pipeline (segmentation + eval)
+```
+
+Model/dataset repos: `tejaskale/trocr-handwriting-ocr-ft` (overfit), `tejaskale/trocr-handwriting-ocr-reg` (regularised), `tejaskale/trocr-lines-ft` (line-level), `tejaskale/trocr-handwriting-lines` (line dataset, 156 train / 71 holdout crops).
+
+### Results
+
+All CER/WER after lowercasing and whitespace collapsing. Page split: 21 train / 9 holdout pages, seed 42.
+
+```text
+run                                   train CER   holdout CER
+zero-shot line pipeline (local, M1)   -           ~0.74
+full-page overfit (100 ep, LR 5e-5)   0.031       0.82
+full-page regularised (20 ep)         1.44        1.29
+line-level regularised (15 ep)        0.91        0.98
+```
+
+No fine-tuned variant beat zero-shot on unseen pages.
+
+### Lessons
+
+1. **Full-page input is out of distribution for TrOCR.** The encoder resizes everything to 384x384; a full page makes handwriting a few pixels tall. The overfit run proved the pipeline can memorise (18/21 training pages reproduced with CER 0.0) but holdout CER 0.82 shows it learned page-layout-to-transcript lookup, not reading.
+
+2. **Memorisation is a cheap, useful pipeline smoke test.** 100 epochs, constant LR 5e-5, no weight decay, batch 2. Train loss 9.4 → 0.02. If a model cannot even memorise ~20 pages, something is broken upstream.
+
+3. **The labels are logical lines, not physical lines.** Each label line is a sentence/bullet that wraps across 2-7 physical ink rows. Naive count-matching of segmented rows to label lines silently misaligns pairs. The workaround — allocate rows to label lines proportionally by character length and stack them into composite crops — produced multi-row images that are nearly as out-of-distribution as full pages, plus alignment noise. Result: even train-split generation was garbage (CER 0.91) while train loss fell to 1.3. Teacher-forced loss can look healthy while free-running generation fails.
+
+4. **Val loss called the overfit early.** In the line run, holdout loss bottomed at epoch 3-6 and rose after; per-epoch val loss (`VAL_LOSS_EVERY=1`) is cheap and worth always logging.
+
+5. **Pin transformers in job scripts.** Unpinned `pip install -U transformers` pulled 5.13, which fails to load TrOCR's tokenizer without `sentencepiece`. Pinned to 5.10.2 (the locally smoke-tested version) + `sentencepiece`.
+
+6. **Smoke-test locally before submitting jobs.** A one-forward-pass + one-generate check on CPU with 2 local examples caught a `model.config.max_length` ValueError (generation knobs must go on `model.generation_config` in current transformers) before it could burn a job.
+
+### Where this leaves TrOCR
+
+Fine-tuning TrOCR on this dataset as currently labelled is a dead end. Viable continuations:
+
+- Re-label a subset at physical-line granularity (each ink row gets its own text); even ~10 pages would yield ~200 clean single-row pairs, which is what TrOCR actually consumes.
+- Otherwise prefer the VLM track (Florence/Qwen/Gemma), which handles full pages with logical-line transcripts natively.
+
+A physical-line re-labelling UI was built, but its projection-profile segmentation produced imprecise crops (merged lines, cut lines, half lines) — unusable as ground truth without better line detection (e.g. Apple Vision bounding boxes). Work stopped here.
+
+## Decision: no more fine-tuning (July 2026)
+
+Fine-tuning is abandoned. With ~30 labelled pages, every fine-tuned variant (Florence full-page, TrOCR full-page, TrOCR line-level) lost to alternatives that need no training, and clean line-level ground truth would require re-labelling effort disproportionate to the goal.
+
+The intention of this project is to scan handwritten notes for transfer to other apps (Ulysses, Bear, Lettera, Journal). The workflow is:
+
+1. As needed, scan a bunch of pages.
+2. Convert the pages to text with the Qwen 9B model via the existing GCP VM pipeline (`scripts/run_gcp_pipeline.sh` + `src/gcp/remote_transcribe.py`, output per model under `experiments/`).
+3. Build further workflows to route the returned text into the target apps (to be tackled separately).
+
+All fine-tuning code was removed; the GCP pipeline, `prepare_upload.py`, `models.json`, and the remote requirements were kept and annotated. The TrOCR HF artifacts (models `trocr-handwriting-ocr-ft`, `trocr-handwriting-ocr-reg`, `trocr-lines-ft`; dataset `trocr-handwriting-lines`) were deleted; the Florence dataset and model repos remain.
